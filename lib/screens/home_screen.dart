@@ -6,6 +6,7 @@ import '../providers/book_provider.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/book_list_item.dart';
 import 'book_detail_screen.dart';
+import 'favorites_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -55,10 +56,17 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Books'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.favorite),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const FavoritesScreen()),
+            ),
+            tooltip: 'Favorites',
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
               await context.read<AuthProvider>().logout();
-              // navigate back to login
               if (mounted) Navigator.pushReplacementNamed(context, '/');
             },
           )
