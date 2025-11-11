@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -14,16 +15,34 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _searchCtrl = TextEditingController();
+  Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    // initial load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<BookProvider>().loadBooks(query: 'flutter');
+    });
+  }
 
   @override
   void dispose() {
     _searchCtrl.dispose();
+    _debounce?.cancel();
     super.dispose();
   }
 
+  void _onSearchChanged() {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      final query = _searchCtrl.text.trim();
+      context.read<BookProvider>().search(query.isEmpty ? 'flutter' : query);
+    });
+  }
+
   Future<void> _doSearch(String query) async {
-    final prov = context.read<BookProvider>();
-    await prov.search(query.trim().isEmpty ? 'flutter' : query.trim());
+    await context.read<BookProvider>().search(query.trim().isEmpty ? 'flutter' : query.trim());
   }
 
   @override
@@ -45,7 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
           )
         ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
+          preferredSize: const Size.fromHeight(64),
           child: Padding(
             padding: const EdgeInsets.all(8),
             child: Row(
@@ -53,9 +72,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 Expanded(
                   child: TextField(
                     controller: _searchCtrl,
+                    onChanged: (_) => _onSearchChanged(),
                     onSubmitted: _doSearch,
                     decoration: InputDecoration(
-                      hintText: 'Search books',
+                      hintText: 'Search books by title, author, ISBN...',
                       prefixIcon: const Icon(Icons.search),
                       suffixIcon: IconButton(
                         icon: const Icon(Icons.clear),
